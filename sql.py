@@ -154,3 +154,40 @@ FROM equity_bank.transactions
 WHERE transaction_date >= CURRENT_DATE - INTERVAL '1 year'
 GROUP BY DATE_TRUNC('month', transaction_date)
 ORDER BY DATE_TRUNC('month', transaction_date);
+
+# -- Q1. Window Function — RANK
+# -- Rank all customers by their total account balance (sum of all their accounts). Show full name, 
+# -- total balance, and their rank. Customers with equal balances should share the same rank.
+# -- Concepts: SUM, GROUP BY, RANK() OVER (ORDER BY)
+
+select CONCAT(C.first_name, ' ', C.last_name) AS full_name,SUM(A.balance) AS total_balance, RANK() OVER(order by SUM (A.balance)  DESC ) AS BALANCE_RANK
+from equity_bank.accounts A
+join equity_bank.customers C
+ON A.customer_id = C.customer_id
+group by 
+C.customer_id,
+CONCAT(C.first_name, ' ', C.last_name)
+
+# -- Q2. Running Total
+# -- For each account, show every transaction along with a
+# -- running total of the amount transacted over time (ordered by transaction date).
+# -- Concepts: SUM() OVER (PARTITION BY ... ORDER BY) — window frame
+
+
+SELECT
+    *,
+    SUM(amount) OVER (
+        PARTITION BY account_id
+        ORDER BY transaction_date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS running_total
+FROM equity_bank.transactions;
+
+
+
+select *, SUM(amount) 
+			OVER( PARTITION BY account_id order by transaction_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)	
+from equity_bank.transactions
+
+# -- a running total should not be partitioned by date this breaks the running totaL
+# -- Unbounded preceding means from thhe first row to the current row
