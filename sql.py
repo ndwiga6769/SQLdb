@@ -114,3 +114,16 @@ group by b.branch_id,b.branch_name
 -- every non-aggregated selected column must be included in the GROUP BY.
 having sum(coalesce(a.balance,0)) > 5000000
 order by b.branch_id asc
+
+# -- Q13. Loan Repayment Analysis
+# -- For each loan, calculate the total amount repaid so far.
+# -- Show loan ID, original loan amount, total repaid, and 
+# -- how much is still outstanding (loan amount minus total repaid).
+# -- Concepts: JOIN, SUM, arithmetic in SELECT
+
+
+SELECT L.loan_id,L.loan_amount AS Original_amount,COALESCE(sum(R.amount_paid),0),(L.loan_amount - COALESCE(sum(R.amount_paid),0)) as Outstanding_balance
+	FROM equity_bank.loans L
+	LEFT JOIN equity_bank.loan_repayments R
+	ON L.loan_id = R.loan_id
+	group by L.loan_id,L.loan_amount
