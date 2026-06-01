@@ -140,3 +140,17 @@ SELECT DISTINCT CONCAT(C.first_name,' ',C.last_name) AS Full_Name
 	INNER JOIN equity_bank.transactions T
 	ON T.account_id = A.account_id
 	WHERE T.transaction_type = 'Withdrawal'
+
+# -- Q15. Grouping by Time Period
+# -- How many transactions were made per month in the last year?
+# -- Show the month (formatted as YYYY-MM) and the transaction count,
+# -- ordered chronologically.
+# -- Concepts: DATE_TRUNC or TO_CHAR, GROUP BY, ORDER BY
+
+SELECT 
+    TO_CHAR(DATE_TRUNC('month', transaction_date), 'YYYY-MM') AS month,
+    COUNT(*) AS transaction_count
+FROM equity_bank.transactions
+WHERE transaction_date >= CURRENT_DATE - INTERVAL '1 year'
+GROUP BY DATE_TRUNC('month', transaction_date)
+ORDER BY DATE_TRUNC('month', transaction_date);
