@@ -127,3 +127,16 @@ SELECT L.loan_id,L.loan_amount AS Original_amount,COALESCE(sum(R.amount_paid),0)
 	LEFT JOIN equity_bank.loan_repayments R
 	ON L.loan_id = R.loan_id
 	group by L.loan_id,L.loan_amount
+
+# -- Q14. DISTINCT with JOIN
+# -- List all customers who have made at least one 'Withdrawal' transaction. 
+# -- Show customer full name only, no duplicates.
+# -- Concepts: DISTINCT, JOIN across 3 tables, WHERE
+
+SELECT DISTINCT CONCAT(C.first_name,' ',C.last_name) AS Full_Name
+	FROM equity_bank.customers C
+	INNER JOIN equity_bank.accounts A
+	ON C.customer_id = A.customer_id
+	INNER JOIN equity_bank.transactions T
+	ON T.account_id = A.account_id
+	WHERE T.transaction_type = 'Withdrawal'
