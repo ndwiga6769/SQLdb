@@ -100,3 +100,17 @@ left join equity_bank.accounts a
 on t.account_id = a.account_id
 left join equity_bank.branches b
 on a.branch_id = b.branch_id
+
+# -- Q12. GROUP BY with HAVING on Aggregates
+# -- Which branches have a total account balance of more
+# -- than 5,000,000? Show the branch name and total balance.
+# -- Concepts: JOIN, GROUP BY, SUM, HAVING
+
+SELECT b.branch_id,b.branch_name, ROUND(sum(coalesce(a.balance,0)),0) as total_balance
+FROM equity_bank.accounts a
+join equity_bank.branches b
+on a.branch_id = b.branch_id
+group by b.branch_id,b.branch_name
+-- every non-aggregated selected column must be included in the GROUP BY.
+having sum(coalesce(a.balance,0)) > 5000000
+order by b.branch_id asc
