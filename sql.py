@@ -191,3 +191,32 @@ from equity_bank.transactions
 
 # -- a running total should not be partitioned by date this breaks the running totaL
 # -- Unbounded preceding means from thhe first row to the current row
+
+# -- Q3. CTE — Loan Default Rate
+# -- Using a CTE, calculate the default rate per branch — i.e. 
+# -- what percentage of loans belonging to customers at each branch are in 'Defaulted' status.
+# -- Show branch name and default rate (%).
+# -- Concepts: CTE, JOIN, GROUP BY, CASE or FILTER, percentage calculation
+
+
+WITH loan_accounts as (
+			select  C.customer_id,L.loan_id,L.loan_status,B.branch_id,B.branch_name
+				from equity_bank.customers C
+				JOIN equity_bank.loans L
+				ON C.customer_id = L.customer_id
+				JOIN equity_bank.accounts A
+				ON A.customer_id = L.customer_id
+				JOIN equity_bank.branches B
+				ON B.branch_id = A.branch_id
+				)
+
+select branch_name,ROUND(
+						100.0 * SUM(
+								CASE 
+										WHEN loan_status = 'Defaulted' THEN 1
+										ELSE 0
+									END	
+									) / COUNT(*),2
+						)	as default_percent_rate
+from loan_accounts
+GROUP BY branch_name
