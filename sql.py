@@ -220,3 +220,22 @@ select branch_name,ROUND(
 						)	as default_percent_rate
 from loan_accounts
 GROUP BY branch_name
+
+# -- Q4. Correlated Subquery
+# -- For each customer, find the most recent transaction date
+# -- across all their accounts. Show customer full name and that 
+# -- date — without using any JOIN (use a correlated subquery instead).
+# -- Concepts: Correlated subquery, MAX
+
+SELECT
+    c.first_name || ' ' || c.last_name AS full_name,
+    (
+        SELECT MAX(t.transaction_date)
+        FROM equity_bank.transactions t
+        WHERE t.account_id IN (
+            SELECT a.account_id
+            FROM equity_bank.accounts a
+            WHERE a.customer_id = c.customer_id
+        )
+    ) AS most_recent_transaction
+FROM equity_bank.customers c;
