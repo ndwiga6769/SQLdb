@@ -239,3 +239,15 @@ SELECT
         )
     ) AS most_recent_transaction
 FROM equity_bank.customers c;
+
+# -- Q5. DENSE_RANK with PARTITION
+# -- Within each branch, rank accounts by balance from 
+# -- highest to lowest. Show branch name, account ID, 
+# -- balance, and rank. Gaps in ranking should not appear between ties.
+
+select B.branch_name,A.account_id,A.balance,DENSE_RANK()  OVER(PARTITION BY A.branch_id ORDER BY A.BALANCE DESC) 
+
+from equity_bank.accounts A
+join equity_bank.branches B
+ON A.branch_id = B.branch_id
+group by   B.branch_name,A.account_id
