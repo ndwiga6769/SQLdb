@@ -19,7 +19,7 @@ and balance > 100000
 -- List all unique cities where Equity Bank has branches.
 -- Concepts: DISTINCT
 
-select distinct city from equity_bank.branches
+select distinct city from equity_bank.accounts
 
 -- Show the top 10 accounts with the highest balances. 
 -- Display account ID, account type, and balance.
@@ -251,3 +251,17 @@ from equity_bank.accounts A
 join equity_bank.branches B
 ON A.branch_id = B.branch_id
 group by   B.branch_name,A.account_id
+
+
+SELECT
+    B.branch_name,
+    D.acctmgr,
+    COALESCE(SUM(D.sanct_lim_kes), 0) AS disbursed_amnt
+FROM disbursement_listing D
+JOIN branch_summary B
+    ON CAST(B.sol_id AS INT) = CAST(D.sol_id AS INT)
+GROUP BY
+    B.branch_name,
+    D.acctmgr
+ORDER BY disbursed_amnt DESC
+LIMIT 5;
