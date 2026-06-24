@@ -265,3 +265,130 @@ GROUP BY
     D.acctmgr
 ORDER BY disbursed_amnt DESC
 LIMIT 5;
+
+-- 3. Officer Performance Outlier Analysis
+-- Using officer_grade_performance, list all
+-- officers who exceeded 100% on new_loans_pct_achievement
+-- but fell below 50% on topups_pct_achievement.
+
+select officer_name,new_loans_pct_achievement,topups_pct_achievement
+from officer_grade_performance
+where new_loans_pct_achievement > 1 and  topups_pct_achievement < 0.5
+
+-- 4. Product-Level Loan Statistics
+-- For each product code in disbursement_listing, compute:
+-- Average dis_amt
+-- Average instalments
+-- Count of loans
+-- Order by average disbursement descending.
+
+select product,
+ROUND(AVG(instalments),0) AS avg_dis_amt,
+ROUND(AVG(dis_amt),0) AS avg_instalments,
+COUNT(*)
+from disbursement_listing
+GROUP BY product
+ORDER BY avg_dis_amt DESC;
+
+-- 5. Repeat Customer Loan Analysis
+-- Find all customers (cif_id) who appear
+-- more than once in disbursement_listing, along with:
+-- Number of loans
+-- Total dis_amt per customer
+
+SELECT cif_id,count(*) as cif_count,sum(dis_amt)
+FROM disbursement_listing
+group by cif_id
+Having count(*) > 1
+
+-- 6. Top 3 Loans per Branch (Window Function)
+-- Using a window function, rank each loan within 
+-- its sol_id by dis_amt descending, and return only the top 3 loans per branch.
+with loan_ranking as (
+				select sol_id,product,dis_amt,account_name,employer_name,
+				rank() over(partition by sol_id order by dis_amt DESC) as ranked_loans
+				from disbursement_listing
+				)
+select L.*,B.branch_name
+from loan_ranking L
+join branch_summary B
+ON cast(L.sol_id as int ) = CAST (B.sol_id as int)
+where ranked_loans = 1
+ORDER BY L.dis_amt desc
+
+-- SELECT * from disbursement_listing
+
+
+
+
+7 WITH loan_disbursed as (
+  SELECT
+        id,
+        cust_dob,
+        acct_opn_date,
+        dis_amt,
+        DATE_PART('YEAR',AGE(acct_opn_date,cust_dob)) as customer_age
+    FROM disbursement_listing
+	)
+select 
+		CASE WHEN customer_age  < 25 THEN 'Under 25'
+			 WHEN customer_age BETWEEN 25 AND 35 THEN '25-35'
+			 WHEN customer_age BETWEEN 36 AND 50 THEN '36-50'
+			 ELSE '50+'
+			 END AS age_range,count(*) as loan_count
+FROM loan_disbursed
+group by 1
+order by loan_count desc
+
+
+-- 8. Loan Size Classification (CASE)
+-- Classify each loan in disbursement_listing as:
+-- Small (<100,000)
+-- Medium (100,000–999,999)
+-- Large (≥1,000,000)
+-- Using sanct_lim, then count loans and sum dis_amt per category.
+
+select CASE WHEN dis_amt < 100000 THEN 'small'
+		 	WHEN dis_amt between 100000 and 999999 THEN 'MEDIUM'
+			WHEN dis_amt >= 1000000 THEN 'large'
+		end as loan_classification,count(*) loan_count,sum(dis_amt) as sum_loan
+from disbursement_listing
+group by 1
+order by loan_count DESC
+
+-- 11. Regional Achievement Ranking
+-- Using region_summary, calculate 
+-- each region’s achievement ratio:
+-- total_disbursement / (new_loan_sanct_lim_kes + topup_sanct_lim_kes)
+-- Rank regions by that ratio.
+
+select region,ROUND(total_disbursement / new_loan_sanct_lim_kes + topup_sanct_lim_kes,0)
+from region_summary
+group by region
+ORDER BY ROUND(total_disbursement / new_loan_sanct_lim_kes + topup_sanct_lim_kes,0) DESC
+
+
+-- 12. Peak Disbursement Day — May 2026
+-- Find the day of the month in May 2026 
+-- with the highest total dis_amt across all branches in disbursement_listing.
+
+SELECT 
+acct_opn_date,ROUND(SUM(dis_amt),0)
+from disbursement_listing
+GROUP BY 1
+ORDER BY SUM(dis_amt) DESC
+
+-- 14. Gender-Based Loan Analysis
+-- For each gender calculate:
+-- Total disbursement amount
+-- Average sanctioned limit
+-- Ratio of New_Loan to Top_Up status counts
+
+select gender, ROUND(COALESCE(SUM(dis_amt),0),0) as disbursement_amount, 
+ROUND(COALESCE(AVG(sanct_lim_kes),0),0),
+ROUND (COUNT (CASE WHEN status = 'New_Loan' THEN 1 END)::NUMERIC
+/
+	COUNT(CASE WHEN status = 'Top_Up' THEN 1 END),3) AS NEW_VS_TOPUP_RATIO 
+from disbursement_listing
+GROUP BY gender
+
