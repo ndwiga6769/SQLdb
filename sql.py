@@ -392,3 +392,16 @@ ROUND (COUNT (CASE WHEN status = 'New_Loan' THEN 1 END)::NUMERIC
 from disbursement_listing
 GROUP BY gender
 
+
+-- 19. Top Employers by Loan Value
+-- For each employer_name (excluding NULLs),
+-- find the top employer by total dis_amt,
+-- but only include employers with at least 5 loans.
+
+select employer_name,COALESCE(SUM(dis_amt),0) as loan_sum ,count(*)
+from disbursement_listing
+WHERE EMPLOYER_NAME IS NOT NULL
+group by employer_name
+Having count(*) > 5
+order by COALESCE(SUM(dis_amt),0) desc
+
