@@ -423,5 +423,27 @@ where instalments IS NOT NULL
 	AND instalments * rep_perd_mths > dis_amt * 3
 
 
+-- 21. Growth Composition by Region
+-- Using region_summary, compute the
+-- proportion of total_growth_count coming from:
+-- Top-ups
+-- New loans
+
+
+SELECT
+    region,
+    total_growth_count,
+    (total_growth_count - topup_count) AS new_loan,
+    topup_count,
+    CONCAT(
+        ROUND((topup_count * 100.0 / total_growth_count), 2),
+        '%'
+    ) AS top_up_percentage,
+    CONCAT(
+        ROUND(((total_growth_count - topup_count) * 100.0 / total_growth_count), 2),
+        '%'
+    ) AS new_loan_percentage
+FROM region_summary;
+
 
 
