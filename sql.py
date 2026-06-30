@@ -405,3 +405,23 @@ group by employer_name
 Having count(*) > 5
 order by COALESCE(SUM(dis_amt),0) desc
 
+-- 20. Repayment vs Disbursement Validation
+-- Using instalments and rep_perd_mths, calculate:
+-- instalments × rep_perd_mths
+-- Compare to dis_amt and flag loans where 
+-- repayment exceeds 3× disbursement.
+
+SELECT instalments,rep_perd_mths,(instalments * rep_perd_mths) as Principal_interest ,dis_amt,
+CASE WHEN instalments * rep_perd_mths > dis_amt * 3
+	 THEN 'LOAN_FLAGGED'
+	 ELSE 'OKAY'
+	 END AS VALIDATION_FLAG
+from disbursement_listing
+where instalments IS NOT NULL
+	AND rep_perd_mths IS NOT NULL
+	AND dis_amt IS NOT NULL
+	AND instalments * rep_perd_mths > dis_amt * 3
+
+
+
+
